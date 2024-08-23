@@ -32,7 +32,8 @@ bts.sst.len <- dbGetQuery(channel_akfin,
                           SURVEY_DEFINITION_ID = 47 and 
                           year > 1989 and
                           length_mm > 0") %>% 
-  rename_all(tolower) 
+  rename_all(tolower) |> 
+  filter(year < YEAR + 1)
 
 #Fishery Lengths
 fsh.sst.len <- dbGetQuery(channel_akfin,

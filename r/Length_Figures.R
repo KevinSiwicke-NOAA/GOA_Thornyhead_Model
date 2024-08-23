@@ -4,7 +4,7 @@
 #
 # =========================================================================================
 # Pull length data
-source("code/length_data_pull.r")
+source("r/length_data_pull.r")
 
 lls.sst.len %>% 
   write_csv(paste0(dat_path, "/goa_sst_lls_lengths", YEAR, ".csv"))
@@ -44,7 +44,7 @@ ll.len %>%
   theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(), 
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
-ggsave(file=paste0("results/", YEAR, "/SST_LLS_Lengths.png"), height = 15, width = 12, dpi=600)
+ggsave(file=paste0(out_path, "/SST_LLS_Lengths.png"), height = 15, width = 12, dpi=600)
 
 ggplot(ll.len, aes(year, mean)) + geom_point() + geom_line()
 
@@ -81,6 +81,8 @@ len %>%
         theme_bw() +
         theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(),
                 panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank())
+
+ggsave(file = paste0(out_path, "/SST_BTS_year_Lengths.png"), height = 10, width = 7, dpi=600)
 
 # Group the BTS numbers by year/length
 len2 = bts.sst.len %>% 
@@ -124,7 +126,7 @@ len2 %>%
   theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(), 
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
-ggsave(file = paste0("results/", YEAR, "/SST_BTS_strata_Lengths.png"), height = 10, width = 7, dpi=600)
+ggsave(file = paste0(out_path, "/SST_BTS_strata_Lengths.png"), height = 10, width = 7, dpi=600)
 
 len$survey = "BTS"
 
@@ -138,7 +140,7 @@ ggplot(ll.means, aes(year, mean))  +
   theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(), 
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
-ggsave(file = paste0("results/", YEAR, "/SST_Time_Series_length_Comp.png"), height = 3.5, width = 6, dpi=600)
+ggsave(file = paste0(out_path, "/SST_Time_Series_length_Comp.png"), height = 3.5, width = 6, dpi=600)
 
 # IS there a relationship between mean of LL lengths and mean of BTS lengthS?
 comb = merge(ll.means, means, by="year")
@@ -227,7 +229,7 @@ ggplot() +
   theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(), 
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
-ggsave(file = paste0("results/", YEAR, "/all_len.png"), height = 4, width = 6, dpi=600)
+ggsave(file = paste0(out_path, "/all_len.png"), height = 4, width = 6, dpi=600)
 # Alternative using ggridges
 
 # Fishery lengths
@@ -254,4 +256,4 @@ ggplot(lengths) +
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
     
-ggsave(file = paste0("results/", YEAR, "/all_fish_len.png"), height = 4, width = 7, dpi=600)
+ggsave(file = paste0(out_path, "/all_fish_len.png"), height = 4, width = 7, dpi=600)

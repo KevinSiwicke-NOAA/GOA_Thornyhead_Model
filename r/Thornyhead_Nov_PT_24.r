@@ -4,8 +4,8 @@
 # process error.
 
 # Model naming conventions:
-# Model 22 = m22: accepted in 2022, 3 process errors, 1 q, xtra observation error for BTS and LLS
-# Model 24 = m24: 1 process error 1 q, xtra observation error for BTS and LLS
+# Model 24.1 = m22: accepted in 2022, 3 process errors, 1 q, xtra observation error for BTS and LLS
+# Model 24.2 = m24: 1 process error 1 q, xtra observation error for BTS and LLS
 
 
 # Set up ----
@@ -30,7 +30,7 @@ ggplot2::theme_set(cowplot::theme_cowplot(font_size = 12) +
                      cowplot::panel_border())
 
 # Read data ----
-source("code/biom_data_pull.r")
+source("r/biom_data_pull.r")
 
 # bottom trawl survey
 # biomass_dat <- read_csv(paste0(dat_path, "/goa_sst_biomass_", YEAR, ".csv"))
@@ -58,8 +58,9 @@ cpue_dat <- model_dat$cpue_dat |>
 cpue_dat |> 
   write_csv(paste0(dat_path, "/goa_sst_rpw_", YEAR, ".csv"))
   
-# Model 22_3_PE -----
-input <- prepare_rema_input(model_name = 'Model 22_3pe_est_Xtra',
+# Model 24.1_3_PE -----
+# Same as M22, but updated log transformation
+input <- prepare_rema_input(model_name = 'Model 24.1_3pe',
                             multi_survey = 1,
                             biomass_dat = biomass_dat,
                             cpue_dat = cpue_dat,
@@ -73,13 +74,13 @@ input <- prepare_rema_input(model_name = 'Model 22_3pe_est_Xtra',
                             extra_biomass_cv = list(assumption = 'extra_cv'),
                             extra_cpue_cv = list(assumption = 'extra_cv'))
 
-m22 <- fit_rema(input)
-out22 <- tidy_rema(m22)
-out22$parameter_estimates
+m24.1 <- fit_rema(input)
+out24.1 <- tidy_rema(m24.1)
+out24.1$parameter_estimates
 
-# Model 24.1_3_PE -----
-# Same as M22, but single PE
-input <- prepare_rema_input(model_name = 'Model 24.1_1pe_est_Xtra',
+# Model 24.2_1_PE -----
+# Same as M24.1 but single PE
+input <- prepare_rema_input(model_name = 'Model 24.2_1pe',
                             multi_survey = 1,
                             biomass_dat = biomass_dat,
                             cpue_dat = cpue_dat,
@@ -93,67 +94,10 @@ input <- prepare_rema_input(model_name = 'Model 24.1_1pe_est_Xtra',
                             extra_biomass_cv = list(assumption = 'extra_cv'),
                             extra_cpue_cv = list(assumption = 'extra_cv'))
 
-m24.1 <- fit_rema(input)
-out24.1 <- tidy_rema(m24.1)
-out24.1$parameter_estimates
-
-# Compare estimated extra obs err (error) for 3-PE and 1-PE ----
-compare <- compare_rema_models(rema_models = list(m22, m24.1))
-
-cowplot::plot_grid(compare$plots$biomass_by_strata +
-                     theme(legend.position = 'top', legend.text = element_text(size = 16)) +
-                     facet_wrap(~factor(strata, levels=c('WGOA (0-500 m)','WGOA (501-700 m)','WGOA (701-1000 m)',
-                                                         'CGOA (0-500 m)','CGOA (501-700 m)','CGOA (701-1000 m)',
-                                                         'EGOA (0-500 m)','EGOA (501-700 m)','EGOA (701-1000 m)')), ncol = 3) +
-                     geom_line(linewidth = 1.2) +
-                     labs(x = NULL, y = 'Biomass (t)',
-                          fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-                     scale_fill_discrete(type = c('#440154FF', '#2A788EFF')) +
-                     scale_color_discrete(type = c('#440154FF', '#2A788EFF')),
-                   compare$plots$cpue_by_strata  +
-                     facet_wrap(~factor(strata, levels=c('WGOA', 'CGOA', 'EGOA')), ncol = 1) +
-                     geom_line(linewidth = 1.2) +
-                     labs(x = NULL, y = 'Relative Population Weights',
-                          fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-                     scale_fill_discrete(type = c('#440154FF', '#2A788EFF')) +
-                     scale_color_discrete(type = c('#440154FF', '#2A788EFF')) +
-                     theme(legend.position = "none"),
-                   ncol = 2,
-                   rel_widths = c(2.5, 1),
-                   align = "h")
-
-ggsave(filename = paste0(out_path, '/M22_3pe_vs_M24.1_1pe_fits.png'),
-       dpi = 400, bg = 'white', units = 'in', height = 9, width = 14)
-
-compare$plots$total_predicted_biomass +
-  theme(legend.position = 'top', legend.text = element_text(size = 16)) +
-  geom_line(linewidth = 1.2) +
-  labs(x = NULL, y = 'Biomass (t)',
-       fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-  scale_fill_discrete(type = c('#440154FF', '#2A788EFF')) +
-  scale_color_discrete(type = c('#440154FF', '#2A788EFF'))
-
-ggsave(filename = paste0(out_path, '/M22_3pe_vs_M24.1_1pe_totalbiomass.png'),
-       dpi = 400, bg = 'white', units = 'in', height = 3.5, width = 8)
-
-# Model 24.2_1_PE -----
-input <- prepare_rema_input(model_name = 'Model 24.2_1pe_NO_XTRA',
-                            multi_survey = 1,
-                            biomass_dat = biomass_dat,
-                            cpue_dat = cpue_dat,
-                            sum_cpue_index = TRUE,
-                            start_year = 1990,
-                            end_year = YEAR + 2,
-                            PE_options = list(pointer_PE_biomass = c(1, 1, 1, 1, 1, 1, 1, 1, 1)),
-                            q_options = list(
-                              pointer_biomass_cpue_strata = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
-                              pointer_q_cpue = c(1, 1, 1)))
-
 m24.2 <- fit_rema(input)
 out24.2 <- tidy_rema(m24.2)
 out24.2$parameter_estimates
-
-# Compare estimated extra obs err (error) versus fixed at -2 ----
+# Compare estimated extra obs err (error) for 3-PE and 1-PE ----
 compare <- compare_rema_models(rema_models = list(m24.1, m24.2))
 
 cowplot::plot_grid(compare$plots$biomass_by_strata +
@@ -178,7 +122,7 @@ cowplot::plot_grid(compare$plots$biomass_by_strata +
                    rel_widths = c(2.5, 1),
                    align = "h")
 
-ggsave(filename = paste0(out_path, '/M24.1_vs_M24.2_fits.png'),
+ggsave(filename = paste0(out_path, '/M24.1_3pe_vs_M24.2_1pe_fits.png'),
        dpi = 400, bg = 'white', units = 'in', height = 9, width = 14)
 
 compare$plots$total_predicted_biomass +
@@ -189,72 +133,12 @@ compare$plots$total_predicted_biomass +
   scale_fill_discrete(type = c('#440154FF', '#2A788EFF')) +
   scale_color_discrete(type = c('#440154FF', '#2A788EFF'))
 
-ggsave(filename = paste0(out_path, '/M24.1_vs_M24.2_totalbiomass.png'),
+ggsave(filename = paste0(out_path, '/M24.1_3pe_vs_M24.2_1pe_totalbiomass.png'),
        dpi = 400, bg = 'white', units = 'in', height = 3.5, width = 8)
-
-# Model 24_1_PE
-# Model 24 same as m22 but a single process error -----
-input <- prepare_rema_input(model_name = 'Model 24.3_1pe_fix_Xtra',
-                            multi_survey = 1,
-                            biomass_dat = biomass_dat,
-                            cpue_dat = cpue_dat,
-                            sum_cpue_index = TRUE,
-                            start_year = 1990,
-                            end_year = YEAR + 2,
-                            PE_options = list(pointer_PE_biomass = c(1, 1, 1, 1, 1, 1, 1, 1, 1)),
-                            q_options = list(
-                              pointer_biomass_cpue_strata = c(1, 1, 1, 2, 2, 2, 3, 3, 3),
-                              pointer_q_cpue = c(1, 1, 1)),
-                            extra_biomass_cv = list(assumption = 'extra_cv', pointer_extra_biomass_cv = c(1,1,1,1,1,1,1,1,1), initial_pars = c(log(mean(biomass_dat$cv, na.rm = T))), fix_pars = c(1:9)),
-                            extra_cpue_cv = list(assumption = 'extra_cv', pointer_extra_biomass_cv = c(1,1,1), initial_pars = c(log(mean(cpue_dat$cv, na.rm = T))), fix_pars = c(1:3)))
-
-m24.3 <- fit_rema(input)
-out24.3 <- tidy_rema(m24.3)
-out24.3$parameter_estimates
-
-# Compare 3 vs 1 PE----
-compare <- compare_rema_models(rema_models = list(m24.1, m24.3))
-
-cowplot::plot_grid(compare$plots$biomass_by_strata +
-                     theme(legend.position = 'top', legend.text = element_text(size = 16)) +
-                     facet_wrap(~factor(strata, levels=c('WGOA (0-500 m)','WGOA (501-700 m)','WGOA (701-1000 m)',
-                                                         'CGOA (0-500 m)','CGOA (501-700 m)','CGOA (701-1000 m)',
-                                                         'EGOA (0-500 m)','EGOA (501-700 m)','EGOA (701-1000 m)')), ncol = 3) +
-                     geom_line(linewidth = 1.2) +
-                     labs(x = NULL, y = 'Biomass (t)',
-                          fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-                     scale_fill_discrete(type = c('#440154FF', '#2A788EFF')) +
-                     scale_color_discrete(type = c('#440154FF', '#2A788EFF')),
-                   compare$plots$cpue_by_strata  +
-                     facet_wrap(~factor(strata, levels=c('WGOA', 'CGOA', 'EGOA')), ncol = 1) +
-                     geom_line(linewidth = 1.2) +
-                     labs(x = NULL, y = 'Relative Population Weights',
-                          fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-                     scale_fill_discrete(type = c('#440154FF', '#2A788EFF')) +
-                     scale_color_discrete(type = c('#440154FF', '#2A788EFF')) +
-                     theme(legend.position = "none"),
-                   ncol = 2,
-                   rel_widths = c(2.5, 1),
-                   align = "h")
-
-ggsave(filename = paste0(out_path, '/M22_1pe_est_vs_M24.3_1pe_fixed_fits.png'),
-       dpi = 400, bg = 'white', units = 'in', height = 9, width = 14)
-
-compare$plots$total_predicted_biomass +
-  theme(legend.position = 'top', legend.text = element_text(size = 16)) +
-  geom_line(linewidth = 1.2) +
-  labs(x = NULL, y = 'Biomass (t)',
-       fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-  scale_fill_discrete(type = c('#440154FF', '#2A788EFF')) +
-  scale_color_discrete(type = c('#440154FF', '#2A788EFF'))
-
-ggsave(filename = paste0(out_path, '/M22_1pe_est_vs_M24.3_1pe_fixed_totalbiomass.png'),
-       dpi = 400, bg = 'white', units = 'in', height = 3.5, width = 8)
-
 
 # param estimates
 compare$output$parameter_estimates %>%
-  write_csv(paste0(out_path, '/M22_3pe_M24_1pe_parameters.csv'))
+  write_csv(paste0(out_path, '/M24.1_3pe_M24.2_1pe_parameters.csv'))
 
 # predicted biomass by strata and total for each model
 biom <- compare$output$biomass_by_strata %>%
@@ -262,7 +146,7 @@ biom <- compare$output$biomass_by_strata %>%
   bind_rows(compare$output$total_predicted_biomass %>%
               mutate(strata = 'Total') %>%
               pivot_wider(id_cols = c(strata, year), names_from = model_name, values_from = pred)) %>%
-  write_csv(paste0(out_path, '/M22_3pe_M24_1pe_biomass_pred.csv'))
+  write_csv(paste0(out_path, '/M24.1_3pe_M24.2_1pe_biomass_pred.csv'))
 
 # apportionment ----
 appo <- compare$output$biomass_by_strata %>%
@@ -280,7 +164,7 @@ appo <- compare$output$biomass_by_strata %>%
 
 appo %>%
   pivot_wider(id_cols = c(strata, year), names_from = model_name, values_from = proportion_std) %>%
-  write_csv(paste0(out_path, '/M22_3pe_M24_1pe_apportionment.csv'))
+  write_csv(paste0(out_path, '/M24.1_3pe_M24.2_1pe_apportionment.csv'))
 
 ggplot(appo, aes(year, proportion_std)) + 
   geom_col(aes(fill = strata)) + 
@@ -288,7 +172,7 @@ ggplot(appo, aes(year, proportion_std)) +
   coord_flip() +
   labs(x = NULL, y = 'Proportion', fill = 'Region')
 
-ggsave(filename = paste0(out_path, '/m22_m24_appo_std.png'),
+ggsave(filename = paste0(out_path, '/m24.1_m24.2_appo_std.png'),
        dpi = 600, bg = 'white', units = 'in', height = 5, width = 10)
 
 full_sumtable <- appo %>%
@@ -317,14 +201,14 @@ cpue_dat %>% filter(year %in% c(2023, 2022)) %>%
   pivot_wider(id_cols = c(strata), names_from = year, values_from = cpue) %>%
   mutate(percent_change = (`2023`-`2022`)/`2022`)
 
-old <- out22$total_predicted_biomass %>% filter(year == 2024) %>% pull(pred)
-new <- out24$total_predicted_biomass %>% filter(year == 2024) %>% pull(pred)
+old <- out24.1$total_predicted_biomass %>% filter(year == 2024) %>% pull(pred)
+new <- out24.2$total_predicted_biomass %>% filter(year == 2024) %>% pull(pred)
 (new-old)/old
 
 
 # Table for predicted biomass by strata with total LCI/UCI
 strata_table <- compare$output$biomass_by_strata %>%
-  filter(model_name == "Model 24_1pe") %>% 
+  filter(model_name == "Model 24.2_1pe") %>% 
   mutate(strata = ifelse(grepl('CGOA', strata), 'CGOA',
                          ifelse(grepl('EGOA', strata), 'EGOA',
                                 'WGOA'))) %>%
@@ -332,7 +216,7 @@ strata_table <- compare$output$biomass_by_strata %>%
   summarise(biomass = sum(pred, na.rm = T), lci = sum(pred, na.rm = T), uci = sum(pred, na.rm = T) ) %>%
   pivot_wider(id_cols = c(year), names_from = strata, values_from = biomass) %>% 
   mutate(WGOA = round(WGOA, 0), CGOA = round(CGOA, 0), EGOA = round(EGOA, 0)) %>% 
-  write.csv(paste0(out_path, '/M24_1pe_Table_strata_biomass_pred.csv'))
+  write.csv(paste0(out_path, '/M24.2_1pe_Table_strata_biomass_pred.csv'))
 
 goa_table <- compare$output$total_predicted_biomass %>% 
   filter(model_name == "Model 24_1pe") %>% 
@@ -341,4 +225,4 @@ goa_table <- compare$output$total_predicted_biomass %>%
   write.csv(paste0(out_path, '/M24_1pe_Table_goa_biomass_pred.csv'))
 
 # Pull length data and make figures
-source("code/Length_figures.r")
+source("r/Length_figures.r")
