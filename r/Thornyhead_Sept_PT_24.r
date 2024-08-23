@@ -30,7 +30,7 @@ ggplot2::theme_set(cowplot::theme_cowplot(font_size = 12) +
                      cowplot::panel_border())
 
 # Read data ----
-source("code/biom_data_pull.r")
+source("r/biom_data_pull.r")
 
 # bottom trawl survey
 # biomass_dat <- read_csv(paste0(dat_path, "/goa_sst_biomass_", YEAR, ".csv"))
