@@ -6,8 +6,8 @@ library(keyring)
 db <- "akfin"
 channel_akfin <- DBI::dbConnect (odbc::odbc(),
                                  dsn = db,
-                                 uid = keyring::key_list(db)$username[1],
-                                 pwd =  keyring::key_get(db, keyring::key_list(db)$username[1]))
+                                 uid = keyring::key_list(db)$username,
+                                 pwd =  keyring::key_get(db, keyring::key_list(db)$username))
 
 lls.sst.len <- dbGetQuery(channel_akfin, 
                           "select    *
@@ -33,7 +33,7 @@ bts.sst.len <- dbGetQuery(channel_akfin,
                           year > 1989 and
                           length_mm > 0") %>% 
   rename_all(tolower) |> 
-  filter(year < YEAR + 1)
+  filter(year < 2025)
 
 #Fishery Lengths
 fsh.sst.len <- dbGetQuery(channel_akfin,

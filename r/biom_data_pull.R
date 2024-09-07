@@ -7,8 +7,8 @@ db <- "akfin"
 
 channel_akfin <- DBI::dbConnect (odbc::odbc(),
                                  dsn = db,
-                                 uid = keyring::key_list(db)$username[1],
-                                 pwd =  keyring::key_get(db, keyring::key_list(db)$username[1]))
+                                 uid = keyring::key_list(db)$username,
+                                 pwd =  keyring::key_get(db, keyring::key_list(db)$username))
 
 
 # Get longline survey RPWs
@@ -46,7 +46,9 @@ biom <- dbGetQuery(channel_akfin,
                           survey_definition_id = 47
                 order by  year asc
                 ") %>% 
-  rename_all(tolower)
+  rename_all(tolower) |> 
+  mutate(biomass_var = ifelse(is.na(biomass_var), (0.5 * biomass_mt) ^ 2, 
+                              ifelse(biomass_var == 0 & biomass_mt > 0, (0.5 * biomass_mt) ^ 2, biomass_var)))
 
 biomass <- biom %>% 
   mutate(strata = ifelse(area_id %in% c(10:13, 110:112, 210, 310), 'WGOA (0-500 m)',
@@ -64,7 +66,7 @@ biomass <- biom %>%
             cv = sqrt(sum(biomass_var, na.rm = TRUE))/biomass) 
 
 biomass_dat <- left_join(data.frame('year' = rep(unique(biomass$year), each = 9), 'strata' = rep(unique(biomass$strata), length(unique(biomass$year)))), biomass, by = c('year', 'strata')) %>% 
-  mutate(cv = ifelse (cv == 0, 0.1, cv))  
+  mutate(cv = ifelse (cv == 0, 0.5, cv))  
 
 model_yrs <- 1990:YEAR
 
