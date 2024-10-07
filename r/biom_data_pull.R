@@ -46,12 +46,12 @@ biom <- dbGetQuery(channel_akfin,
                           survey_definition_id = 47
                 order by  year asc
                 ") %>% 
-  rename_all(tolower) |> 
-  mutate(biomass_var = ifelse(is.na(biomass_var), (0.5 * biomass_mt) ^ 2, 
-                              ifelse(biomass_var == 0 & biomass_mt > 0, (0.5 * biomass_mt) ^ 2, biomass_var)))
+  rename_all(tolower)
 
-biomass <- biom %>% 
-  mutate(strata = ifelse(area_id %in% c(10:13, 110:112, 210, 310), 'WGOA (0-500 m)',
+biomass <- biom |> 
+  mutate(biomass_var = ifelse(is.na(biomass_var), (0.5 * biomass_mt) ^ 2, 
+                              ifelse(biomass_var == 0 & biomass_mt > 0, (0.5 * biomass_mt) ^ 2, biomass_var)),
+         strata = ifelse(area_id %in% c(10:13, 110:112, 210, 310), 'WGOA (0-500 m)',
                          ifelse(area_id %in% c(20:35, 120:134, 220:232, 32, 320, 330), 'CGOA (0-500 m)',
                                 ifelse(area_id %in% c(40:50, 140:151, 240:251, 340:351), 'EGOA (0-500 m)',
                                        ifelse(area_id == 410, 'WGOA (501-700 m)',
@@ -68,6 +68,25 @@ biomass <- biom %>%
 biomass_dat <- left_join(data.frame('year' = rep(unique(biomass$year), each = 9), 'strata' = rep(unique(biomass$strata), length(unique(biomass$year)))), biomass, by = c('year', 'strata')) %>% 
   mutate(cv = ifelse (cv == 0, 0.5, cv))  
 
+# Get bottom trawl survey biomass data as the old version with NA CVs and 0.1 for the one missing case
+biomass_old <- biom %>% 
+  mutate(strata = ifelse(area_id %in% c(10:13, 110:112, 210, 310), 'WGOA (0-500 m)',
+                         ifelse(area_id %in% c(20:35, 120:134, 220:232, 32, 320, 330), 'CGOA (0-500 m)',
+                                ifelse(area_id %in% c(40:50, 140:151, 240:251, 340:351), 'EGOA (0-500 m)',
+                                       ifelse(area_id == 410, 'WGOA (501-700 m)',
+                                              ifelse(area_id == 510, 'WGOA (701-1000 m)',
+                                                     ifelse(area_id %in% c(420, 430), 'CGOA (501-700 m)',
+                                                            ifelse(area_id %in% c(520, 530), 'CGOA (701-1000 m)',
+                                                                   ifelse(area_id %in% c(440, 450), 'EGOA (501-700 m)',
+                                                                          ifelse(area_id %in% c(540, 550), 'EGOA (701-1000 m)', NA)))))))))) %>% 
+  filter(!is.na(strata)) %>% 
+  group_by(year, strata) %>% 
+  summarize(n = sum(n_haul), biomass = sum(biomass_mt, na.rm = TRUE),
+            cv = sqrt(sum(biomass_var, na.rm = TRUE))/biomass) 
+
+biomass_old_dat <- left_join(data.frame('year' = rep(unique(biomass_old$year), each = 9), 'strata' = rep(unique(biomass_old$strata), length(unique(biomass_old$year)))), biomass_old, by = c('year', 'strata')) %>% 
+  mutate(cv = ifelse (cv == 0, 0.1, cv))  
+
 model_yrs <- 1990:YEAR
 
 # ggplot(biomass_dat, aes(year, biomass)) +
@@ -76,6 +95,6 @@ model_yrs <- 1990:YEAR
 
 # This is the data that is brought into rema
 model_dat <- list('biomass_dat' = biomass_dat, 'cpue_dat' = cpue_dat, 
-                  'model_yrs' = model_yrs)
+                  'biomass_dat_old' = biomass_old_dat, 'model_yrs' = model_yrs)
 
 DBI::dbDisconnect(channel_akfin)

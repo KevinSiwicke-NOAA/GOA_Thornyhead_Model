@@ -5,8 +5,8 @@ library(ggplot2)
 # db <- connect() # if you setup keyring this will just work https://afsc-assessments.github.io/afscdata/articles/getting-started.html
 db <- DBI::dbConnect (odbc::odbc(),
                       dsn = "akfin",
-                      uid = keyring::key_list("akfin")$username[1],
-                      pwd =  keyring::key_get("akfin", keyring::key_list("akfin")$username[1]))
+                      uid = keyring::key_list("akfin")$username,
+                      pwd =  keyring::key_get("akfin", keyring::key_list("akfin")$username))
 # globals
 year <- 2024
 species <- 'THDS'
@@ -34,7 +34,7 @@ db <- DBI::dbConnect (odbc::odbc(),
 
 
 try <- goa_thornyhead(year = 2024)
-area_catch <- read.csv(paste0(dat_path, "/Groundfish Total Catch.csv")) |>
+area_catch <- read.csv(paste0("2024_sept_pt/Groundfish Total Catch.csv")) |>
   rename(strata = Regulatory.Area) |> 
   mutate(strata = ifelse(strata == "Western Gulf", "WGOA", 
                          ifelse(strata == "Central Gulf", "CGOA", "EGOA"))) |> 
