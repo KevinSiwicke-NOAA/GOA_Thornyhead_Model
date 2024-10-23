@@ -44,7 +44,7 @@ ll.len %>%
   theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(), 
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
-ggsave(file=paste0(out_path, "/SST_LLS_Lengths.png"), height = 15, width = 12, dpi=600)
+ggsave(file=paste0(out_path, "/SST_LLS_Lengths.png"), height = 15, width = 12, dpi=300)
 
 ggplot(ll.len, aes(year, mean)) + geom_point() + geom_line()
 
@@ -82,7 +82,7 @@ len %>%
         theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(),
                 panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank())
 
-ggsave(file = paste0(out_path, "/SST_BTS_year_Lengths.png"), height = 10, width = 7, dpi=600)
+ggsave(file = paste0(out_path, "/SST_BTS_year_Lengths.png"), height = 10, width = 7, dpi=300)
 
 # Group the BTS numbers by year/length
 len2 = bts.sst.len %>% 
@@ -126,7 +126,7 @@ len2 %>%
   theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(), 
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
-ggsave(file = paste0(out_path, "/SST_BTS_strata_Lengths.png"), height = 10, width = 7, dpi=600)
+ggsave(file = paste0(out_path, "/SST_BTS_strata_Lengths.png"), height = 10, width = 7, dpi=300)
 
 len$survey = "BTS"
 
@@ -140,7 +140,7 @@ ggplot(ll.means, aes(year, mean))  +
   theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(), 
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
-ggsave(file = paste0(out_path, "/SST_Time_Series_length_Comp.png"), height = 3.5, width = 6, dpi=600)
+ggsave(file = paste0(out_path, "/SST_Time_Series_length_Comp.png"), height = 3.5, width = 6, dpi=300)
 
 # IS there a relationship between mean of LL lengths and mean of BTS lengthS?
 comb = merge(ll.means, means, by="year")
@@ -238,22 +238,61 @@ lengths <- fsh.sst.len %>%
   filter(nmfs_area > 609, nmfs_area < 651, !nmfs_area == 649) %>% 
   mutate(Gear = ifelse(gear == 1, "Trawl", "Longline"))
 
-mean_lengths <- lengths %>% 
-  group_by(Gear) %>% 
-  summarize(Mean = mean(length))
+f_len = lengths %>%
+  group_by(Gear, year, length) %>%
+  summarize(freq = sum(frequency))
 
-ggplot(lengths) + 
-  geom_histogram(aes(x=length, y=after_stat(density), weighted.mean=frequency, fill = Gear),
+f_len$calc = f_len$freq*f_len$length
+
+f_means = f_len %>% group_by(Gear, year) %>%
+  summarize(tot = sum(freq), l_calc = sum(calc))
+
+f_means$mean = f_means$l_calc/f_means$tot
+f_len = merge(f_len, f_means, by=c("Gear", "year"))
+
+f_len %>% filter(Gear == "Longline") |> 
+  ggplot(aes(x=length, y=after_stat(density), weighted.mean=freq)) +
+  # theme_linedraw() +
+  geom_histogram(alpha=0.25, binwidth=1, col="black") +
+  facet_wrap(~year, ncol=2) +
+  theme(legend.position = "top") +
+  xlab("Length (cm)") +
+  ylab("Proportion of trawl survey population") +
+  geom_text(aes(x=60, y=0.055, label=year)) +
+  geom_text(aes(x=60, y=0.03, label=paste0("(", format(round(mean, digits=1), nsmall = 1) , " cm)"))) +
+  scale_y_continuous(expand=c(0,0), limits=c(0,0.09)) +
+  scale_x_continuous(expand=c(0,0), breaks=seq(0,110,10)) +
+  theme_bw() +
+  theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(),
+        panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank())
+
+f_len_N <- f_len %>% 
+  group_by(Gear, year) %>% 
+  summarize(N = sum(freq))
+
+f_len_all = lengths %>%
+  group_by(Gear, length) %>%
+  summarize(freq = sum(frequency))
+
+f_len_all$calc = f_len_all$freq*f_len_all$length
+
+f_means_all = f_len_all %>% group_by(Gear) %>%
+  summarize(tot = sum(freq), l_calc = sum(calc))
+
+f_means_all$mean = f_means_all$l_calc/f_means_all$tot
+f_len_all = merge(f_len_all, f_means_all, by=c("Gear"))
+
+ggplot(f_len_all) + 
+  geom_histogram(aes(x=length, y=after_stat(density), weighted.mean=freq, fill = Gear),
                  position = 'identity', alpha=0.5, binwidth=1, col="black") +
   scale_fill_discrete(type = c('blue', 'red')) +
   xlab("Length (cm)") +
   ylab("Length composition by gear type") +
-  geom_text(data=mean_lengths, aes(x=c(60,60),  y=c(0.055, .05), label=paste0(Gear, " mean length: ", format(round(Mean, digits=1), nsmall = 1) , " cm"))) +
+  geom_text(data=f_means_all, aes(x=c(60,60),  y=c(0.055, .05), label=paste0(Gear, " mean length: ", format(round(mean, digits=1), nsmall = 1) , " cm"))) +
   scale_y_continuous(expand=c(0,0), limits=c(0,0.075)) +
   scale_x_continuous(expand=c(0,5), breaks=seq(5,85,10)) +
   theme_bw() +
   theme(axis.title=element_text(size=14), axis.text=element_text(size=12), strip.background=element_blank(), 
         panel.grid.minor = element_blank(), panel.grid.major = element_blank(), strip.text=element_blank()) 
 
-    
 ggsave(file = paste0(out_path, "/all_fish_len.png"), height = 4, width = 7, dpi=600)
