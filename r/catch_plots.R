@@ -34,7 +34,7 @@ db <- DBI::dbConnect (odbc::odbc(),
 
 
 try <- goa_thornyhead(year = 2024)
-area_catch <- read.csv(paste0("2024_sept_pt/Groundfish Total Catch.csv")) |>
+area_catch <- read.csv(paste0("data/2024_sept_pt/Groundfish Total Catch.csv")) |>
   rename(strata = Regulatory.Area) |> 
   mutate(strata = ifelse(strata == "Western Gulf", "WGOA", 
                          ifelse(strata == "Central Gulf", "CGOA", "EGOA"))) |> 
@@ -43,16 +43,17 @@ area_catch <- read.csv(paste0("2024_sept_pt/Groundfish Total Catch.csv")) |>
 
 catch_plot <- left_join(abc, area_catch)
 
-ggplot(catch_plot) + 
+ggplot(catch_plot |> filter(Year > 2009, Year < 2025)) + 
   geom_point(aes(Year, Catch)) +
   geom_line(aes(Year, Catch)) +
-  geom_point(aes(Year, ABC), col = "red4") +
-  geom_line(aes(Year, ABC), col = "red4") +
+  geom_point(aes(Year, ABC), col = "red3") +
+  geom_line(aes(Year, ABC), col = "red3") +
   facet_wrap(~factor(strata, levels = c("WGOA", "CGOA", "EGOA")))  +
-  ylab("Catch (mt)")
+  ylab("Catch (t)") +
+  theme_bw()
 
 ggsave(filename = paste0(out_path, '/catch_by_area.png'),
-       dpi = 400, bg = 'white', units = 'in', height = 5.5, width = 6)
+       dpi = 300, bg = 'white', units = 'in', height = 4, width = 10)
 
 fish_catch <- read.csv(paste0(dat_path, "/Groundfish Total Catch by Fishery.csv")) |>
   group_by(Year, Gear) |> 
