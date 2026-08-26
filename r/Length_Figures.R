@@ -53,7 +53,6 @@ ll.len$survey = "LLS"
 #####################
 # Group the BTS numbers by year/length
 len = bts.sst.len %>%
-  filter(year < 2025) |> 
   mutate(length = length_mm / 10) %>%
   group_by(year, length) %>%
   summarize(freq = sum(population_count))
@@ -86,7 +85,6 @@ ggsave(file = paste0(out_path, "/SST_BTS_year_Lengths.png"), height = 10, width 
 
 # Group the BTS numbers by year/length
 len2 = bts.sst.len %>% 
-  filter(year < 2025) %>%
   mutate(length = length_mm / 10,
          strata = ifelse(area_id %in% c(10:13, 110:112, 210, 310), 'WGOA (0-500 m)',
                          ifelse(area_id %in% c(20:35, 120:134, 220:232, 32, 320, 330), 'CGOA (0-500 m)',
@@ -152,7 +150,6 @@ ggplot(comb, aes(mean.x, mean.y)) +
 
 # Summary of entire survey datasets
 all.bts = bts.sst.len %>% 
-  filter(year < 2025) |> 
   mutate(length = length_mm / 10) %>% 
   group_by(length) %>% 
   summarize(freq = sum(population_count))
