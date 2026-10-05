@@ -1,6 +1,7 @@
 library(afscdata)
 library(dplyr)
 library(ggplot2)
+library(DBI)
 
 # db <- connect() # if you setup keyring this will just work https://afsc-assessments.github.io/afscdata/articles/getting-started.html
 db <- DBI::dbConnect (odbc::odbc(),
@@ -34,8 +35,27 @@ area_catch <- catch |>
   rename(strata = fmp_subarea, Retention = retained_or_discarded) |> 
   mutate(Year = as.numeric(year), strata = ifelse(strata == "WG", "WGOA", 
                                                   ifelse(strata == "CG", "CGOA", "EGOA"))) |> 
+  group_by(Year, strata) |> 
+  summarize(Catch = sum(weight_posted))
+
+area_catch <- catch |> 
+  rename(strata = fmp_subarea, Retention = retained_or_discarded) |> 
+  mutate(Year = as.numeric(year), strata = ifelse(strata == "WG", "WGOA", 
+                                                  ifelse(strata == "CG", "CGOA", "EGOA"))) |> 
   group_by(Year, strata, Retention) |> 
   summarize(Catch = sum(weight_posted))
+
+catch_disc <- catch |> 
+  rename(strata = fmp_subarea, Retention = retained_or_discarded) |> 
+  mutate(Year = as.numeric(year), strata = ifelse(strata == "WG", "WGOA", 
+                                                  ifelse(strata == "CG", "CGOA", "EGOA"))) |> 
+  group_by(Year, Retention) |> 
+  summarize(Catch = sum(weight_posted))
+
+goa_catch <- catch |> 
+  mutate(Year = as.numeric(year)) |> 
+  group_by(Year) |> 
+  summarize(Catch = round(sum(weight_posted), 2))
 
 catch_plot <- left_join(abc, area_catch) |> filter(Year > 2009, Year < 2027)
 
@@ -57,6 +77,15 @@ fish_catch <- catch |>
   group_by(Year, Gear) |> 
   summarize(Catch = sum(weight_posted))
 
+catch_tab <- catch |>
+  rename(Gear = agency_gear_code, Retention = retained_or_discarded) |> 
+  mutate(Year = as.numeric(year),
+         Gear = ifelse(Gear %in% c('PTR', 'NPT'), 'trawl',
+                       ifelse(Gear == 'HAL', 'longline', NA))) |>
+  filter(!is.na(Gear)) |> 
+  group_by(Year, Gear, Retention) |> 
+  summarize(Catch = sum(weight_posted))
+
 ggplot(fish_catch) +
   geom_col(aes(Year, Catch, fill = Gear)) +
   scale_y_continuous(expand =c(0,0), limits = c(0, 1200)) +
@@ -66,10 +95,18 @@ ggsave(filename = paste0(out_path, '/catch_by_fishery.png'),
        dpi = 400, bg = 'white', units = 'in', height = 5.5, width = 6)
 
 target_catch <- catch |>
-  rename(Target = trip_target_code) |> 
+  rename(Target = trip_target_name) |> 
   mutate(Year = as.numeric(year)) |> 
   group_by(Year, Target) |> 
   summarize(Catch = sum(weight_posted))
+
+target_catch_disc <- catch |>
+  filter(retained_or_discarded == 'D') |> 
+  rename(Target = trip_target_name) |> 
+  mutate(Year = as.numeric(year)) |> 
+  group_by(Year, Target) |> 
+  summarize(Catch = sum(weight_posted))
+
 
 ggplot(target_catch) +
   geom_col(aes(Year, Catch, fill = Target)) +

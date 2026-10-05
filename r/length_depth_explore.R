@@ -48,7 +48,7 @@ bts_len <- dbGetQuery(channel_akfin,
                 from      gap_products.akfin_length_v
                 where     species_code = '30020' and
                           SURVEY_DEFINITION_ID = 47 and 
-                          year = 1990 and
+                          year > 1989 and
                           length_mm > 0") %>% 
   rename_all(tolower) |>
   mutate(depth_gear_m = ifelse(is.na(depth_gear_m), depth_m, depth_gear_m),
@@ -74,7 +74,8 @@ goa_bts_raw_data <- data.frame(year = rep(bts_len$year, bts_len$frequency),
          survey = 'BTS') |> 
   select(!depth)
 
-ggplot(goa_bts_raw_data, aes(region, length, fill = strat)) +
+ggplot(goa_bts_raw_data, aes(year, length, fill = strat)) +
+  facet_wrap(~region) +
   geom_boxplot() 
 
 all_lengths <- bind_rows(goa_lls_raw_data, goa_bts_raw_data) |> 

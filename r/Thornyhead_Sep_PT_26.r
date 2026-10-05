@@ -64,11 +64,33 @@ biomass_dat_2 |>
                                            format(round(cv, 3), nsmall = 3, trim = TRUE), ')')))) |> 
   pivot_wider(id_cols = c(year), names_from = strata, values_from = value) |> 
   arrange(year) |> 
-  write_csv(paste0(out_path, '/biomass_3strat_data_wide.csv'))
+  write_csv(paste0(out_path, '/biomass_2strat_data_wide.csv'))
 
 # imputed data 
 biomass_dat_3_imp <- model_dat$biomass_dat_3strat_impute
 biomass_dat_2_imp <- model_dat$biomass_dat_2strat_impute
+
+biomass_dat_3_imp |> 
+  tidyr::expand(year = min(biomass_dat_3_imp$year):(YEAR),
+                strata) |> 
+  left_join(biomass_dat_3_imp |> 
+              mutate(value = ifelse(is.na(biomass), NA,
+                                    paste0(prettyNum(round(biomass, 0), big.mark = ','), ' (',
+                                           format(round(cv, 3), nsmall = 3, trim = TRUE), ')')))) |> 
+  pivot_wider(id_cols = c(year), names_from = strata, values_from = value) |> 
+  arrange(year) |> 
+  write_csv(paste0(out_path, '/biomass_3strat_imp _data_wide.csv'))
+
+biomass_dat_2_imp |> 
+  tidyr::expand(year = min(biomass_dat_2_imp$year):(YEAR),
+                strata) |> 
+  left_join(biomass_dat_2_imp |> 
+              mutate(value = ifelse(is.na(biomass), NA,
+                                    paste0(prettyNum(round(biomass, 0), big.mark = ','), ' (',
+                                           format(round(cv, 3), nsmall = 3, trim = TRUE), ')')))) |> 
+  pivot_wider(id_cols = c(year), names_from = strata, values_from = value) |> 
+  arrange(year) |> 
+  write_csv(paste0(out_path, '/biomass_2strat_imp _data_wide.csv'))
 
 # longline survey rpws
 # cpue_dat <- read_csv(paste0(dat_path, "/goa_sst_rpw_", YEAR, ".csv"))
@@ -730,103 +752,103 @@ ggsave(filename = paste0(out_path, '/2025_change.png'),
 # two additional observation errors as they lead to model validation issues
 # Model 24.2g_25 -----
 # 24.2g, same as f, but only additional cv on longline, none on biomass
-# input <- prepare_rema_input(model_name = 'M24.2g_25_prior_xtra',
-#                             multi_survey = 1,
-#                             biomass_dat = biomass_dat_2 |> filter(!year %in% c(1990, 1993, 1996, 2001)),
-#                             cpue_dat = cpue_dat,
-#                             sum_cpue_index = TRUE,
-#                             start_year = 1992,
-#                             end_year = 2027,
-#                             PE_options = list(pointer_PE_biomass = c(1, 1, 1, 1, 1, 1),
-#                                                    penalty_options = 'normal_prior',
-#                                                    penalty_values = c(-2.3, 0.5)),
-#                             q_options = list(
-#                               pointer_biomass_cpue_strata = c(1, 1, 2, 2, 3, 3),
-#                               pointer_q_cpue = c(1, 1, 1)),
-#                             extra_cpue_cv = list(assumption = 'extra_cv'))
-# 
-# m24.2g_25 <- fit_rema(input)
-# out24.2g_25 <- tidy_rema(m24.2g_25)
-# out24.2g_25$parameter_estimates
-# 
-# input <- prepare_rema_input(model_name = 'M24.2h_25_prior',
-#                             multi_survey = 1,
-#                             biomass_dat = biomass_dat_2 |> filter(!year %in% c(1990, 1993, 1996, 2001)),
-#                             cpue_dat = cpue_dat,
-#                             sum_cpue_index = TRUE,
-#                             start_year = 1992,
-#                             end_year = 2027,
-#                             PE_options = list(pointer_PE_biomass = c(1, 1, 1, 1, 1, 1),
-#                                               penalty_options = 'normal_prior',
-#                                               penalty_values = c(-2.3, 0.1)),
-#                             q_options = list(
-#                               pointer_biomass_cpue_strata = c(1, 1, 2, 2, 3, 3),
-#                               pointer_q_cpue = c(1, 1, 1)))
-# 
-# m24.2h_25 <- fit_rema(input)
-# out24.2h_25 <- tidy_rema(m24.2h_25)
-# out24.2h_25$parameter_estimates
-# 
-# input <- prepare_rema_input(model_name = 'M24.2i_25_cv',
-#                             multi_survey = 1,
-#                             biomass_dat = biomass_dat_2 |> filter(!year %in% c(1990, 1993, 1996, 2001)) |> 
-#                               mutate(cv = ifelse(cv < 0.15, 0.15, cv)),
-#                             cpue_dat = cpue_dat |> 
-#                               mutate(cv = ifelse(cv < 0.2, 0.2, cv)),
-#                             sum_cpue_index = TRUE,
-#                             start_year = 1992,
-#                             end_year = 2027,
-#                             PE_options = list(pointer_PE_biomass = c(1, 1, 1, 1, 1, 1)),
-#                             q_options = list(
-#                               pointer_biomass_cpue_strata = c(1, 1, 2, 2, 3, 3),
-#                               pointer_q_cpue = c(1, 1, 1)))
-# 
-# m24.2i_25 <- fit_rema(input)
-# out24.2i_25 <- tidy_rema(m24.2i_25)
-# out24.2i_25$parameter_estimates
-# 
-# # 
-# # # compare with addition of 2025
-# compare <- compare_rema_models(rema_models = list(m24.2f_25, m24.2h_25, m24.2i_25))
-# 
-# cowplot::plot_grid(ggplot(data = compare$output$biomass_by_strata, aes(x = year)) +
-#                      theme(legend.position = 'top', legend.text = element_text(size = 16)) +
-#                      facet_wrap(~factor(strata, levels=c('WGOA_0_700','CGOA_0_700','EGOA_0_700',
-#                                                          'WGOA_701_1000','CGOA_701_1000','EGOA_701_1000')), ncol = 3) +
-#                      geom_ribbon(aes(ymin = pred_lci, ymax = pred_uci, fill = model_name), col = NA, alpha = 0.2) +
-#                      geom_line(aes(y = pred, col = model_name), linewidth = 1.2) +
-#                      geom_point(aes(y = obs, fill = model_name), pch = 21) +
-#                      geom_errorbar(aes(ymin = obs_lci, ymax = obs_uci, col = model_name)) +
-#                      labs(x = NULL, y = 'Biomass (t)',
-#                           fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-#                      scale_fill_discrete(type = c('#0072B2', 'black', 'firebrick')) +
-#                      scale_y_continuous(expand = c(0,0)) +
-#                      coord_cartesian(ylim = c(0, 71000)) + # Only constrains the visual window
-#                      scale_color_discrete(type = c('#0072B2', 'black', 'firebrick')),
-#                    compare$plots$cpue_by_strata  +
-#                      facet_wrap(~factor(strata, levels=c('WGOA', 'CGOA', 'EGOA')), ncol = 3) +
-#                      geom_line(linewidth = 1.2) +
-#                      geom_point(aes(y = obs), col = 'black') +
-#                      geom_errorbar(aes(ymin = obs_lci, ymax = obs_uci, col = model_name)) +
-#                      labs(x = NULL, y = 'Relative Population Weights',
-#                           fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-#                      scale_fill_discrete(type = c('#0072B2', 'black', 'firebrick')) +
-#                      scale_color_discrete(type = c('#0072B2', 'black', 'firebrick')) +
-#                      theme(legend.position = "none"),
-#                    ncol = 1,
-#                    rel_heights = c(2, 1),
-#                    align = "v")
-# 
-# # compare <- compare_rema_models(rema_models = list(m24.2a, m24.2d_25, m24.2e_25, m24.2f_25))
-# 
-# compare$plots$total_predicted_biomass +
-#   theme(legend.position = 'top', legend.text = element_text(size = 12)) +
-#   geom_line(linewidth = 1.2) +
-#   labs(x = NULL, y = 'Biomass (t)',
-#        fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
-#   scale_fill_discrete(type = c('#0072B2', 'black', 'firebrick')) + 
-#   scale_color_discrete(type = c('#0072B2', 'black', 'firebrick')) +
-#   scale_y_continuous(expand = c(0,0), limits = c(0, 115000))
+input <- prepare_rema_input(model_name = 'M24.2g_25_prior_xtra',
+                            multi_survey = 1,
+                            biomass_dat = biomass_dat_2 |> filter(!year %in% c(1990, 1993, 1996, 2001)),
+                            cpue_dat = cpue_dat,
+                            sum_cpue_index = TRUE,
+                            start_year = 1992,
+                            end_year = 2027,
+                            PE_options = list(pointer_PE_biomass = c(1, 1, 1, 1, 1, 1),
+                                                   penalty_options = 'normal_prior',
+                                                   penalty_values = c(-3, 0.25)),
+                            q_options = list(
+                              pointer_biomass_cpue_strata = c(1, 1, 2, 2, 3, 3),
+                              pointer_q_cpue = c(1, 1, 1)),
+                            extra_cpue_cv = list(assumption = 'extra_cv'))
+
+m24.2g_25 <- fit_rema(input)
+out24.2g_25 <- tidy_rema(m24.2g_25)
+out24.2g_25$parameter_estimates
+
+input <- prepare_rema_input(model_name = 'M24.2h_25_prior',
+                            multi_survey = 1,
+                            biomass_dat = biomass_dat_2 |> filter(!year %in% c(1990, 1993, 1996, 2001)),
+                            cpue_dat = cpue_dat,
+                            sum_cpue_index = TRUE,
+                            start_year = 1992,
+                            end_year = 2027,
+                            PE_options = list(pointer_PE_biomass = c(1, 1, 1, 1, 1, 1),
+                                              penalty_options = 'normal_prior',
+                                              penalty_values = c(-3, 0.2)),
+                            q_options = list(
+                              pointer_biomass_cpue_strata = c(1, 1, 2, 2, 3, 3),
+                              pointer_q_cpue = c(1, 1, 1)))
+
+m24.2h_25 <- fit_rema(input)
+out24.2h_25 <- tidy_rema(m24.2h_25)
+out24.2h_25$parameter_estimates
+
+input <- prepare_rema_input(model_name = 'M24.2i_25_cv',
+                            multi_survey = 1,
+                            biomass_dat = biomass_dat_2 |> filter(!year %in% c(1990, 1993, 1996, 2001)) |>
+                              mutate(cv = ifelse(cv < 0.15, 0.15, cv)),
+                            cpue_dat = cpue_dat |>
+                              mutate(cv = ifelse(cv < 0.2, 0.2, cv)),
+                            sum_cpue_index = TRUE,
+                            start_year = 1992,
+                            end_year = 2027,
+                            PE_options = list(pointer_PE_biomass = c(1, 1, 1, 1, 1, 1)),
+                            q_options = list(
+                              pointer_biomass_cpue_strata = c(1, 1, 2, 2, 3, 3),
+                              pointer_q_cpue = c(1, 1, 1)))
+
+m24.2i_25 <- fit_rema(input)
+out24.2i_25 <- tidy_rema(m24.2i_25)
+out24.2i_25$parameter_estimates
+
+#
+# # compare with addition of 2025
+compare <- compare_rema_models(rema_models = list(m24.2f_25, m24.2h_25, m24.2i_25))
+
+cowplot::plot_grid(ggplot(data = compare$output$biomass_by_strata, aes(x = year)) +
+                     theme(legend.position = 'top', legend.text = element_text(size = 16)) +
+                     facet_wrap(~factor(strata, levels=c('WGOA_0_700','CGOA_0_700','EGOA_0_700',
+                                                         'WGOA_701_1000','CGOA_701_1000','EGOA_701_1000')), ncol = 3) +
+                     geom_ribbon(aes(ymin = pred_lci, ymax = pred_uci, fill = model_name), col = NA, alpha = 0.2) +
+                     geom_line(aes(y = pred, col = model_name), linewidth = 1.2) +
+                     geom_point(aes(y = obs, fill = model_name), pch = 21) +
+                     geom_errorbar(aes(ymin = obs_lci, ymax = obs_uci, col = model_name)) +
+                     labs(x = NULL, y = 'Biomass (t)',
+                          fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
+                     scale_fill_discrete(type = c('#0072B2', 'black', 'firebrick')) +
+                     scale_y_continuous(expand = c(0,0)) +
+                     coord_cartesian(ylim = c(0, 71000)) + # Only constrains the visual window
+                     scale_color_discrete(type = c('#0072B2', 'black', 'firebrick')),
+                   compare$plots$cpue_by_strata  +
+                     facet_wrap(~factor(strata, levels=c('WGOA', 'CGOA', 'EGOA')), ncol = 3) +
+                     geom_line(linewidth = 1.2) +
+                     geom_point(aes(y = obs), col = 'black') +
+                     geom_errorbar(aes(ymin = obs_lci, ymax = obs_uci, col = model_name)) +
+                     labs(x = NULL, y = 'Relative Population Weights',
+                          fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
+                     scale_fill_discrete(type = c('#0072B2', 'black', 'firebrick')) +
+                     scale_color_discrete(type = c('#0072B2', 'black', 'firebrick')) +
+                     theme(legend.position = "none"),
+                   ncol = 1,
+                   rel_heights = c(2, 1),
+                   align = "v")
+
+compare <- compare_rema_models(rema_models = list(m24.2a, m24.2e_25, m24.2f_25, m24.2h_25, m24.2i_25))
+
+compare$plots$total_predicted_biomass +
+  theme(legend.position = 'top', legend.text = element_text(size = 12)) +
+  geom_line(linewidth = 1.2) +
+  labs(x = NULL, y = 'Biomass (t)',
+       fill = NULL, colour = NULL, shape = NULL, lty = NULL) +
+  scale_fill_discrete(type = c('#0072B2', 'black', 'firebrick')) +
+  scale_color_discrete(type = c('#0072B2', 'black', 'firebrick')) +
+  scale_y_continuous(expand = c(0,0), limits = c(0, 115000))
 
 # apportionment ----
 appo <- compare$output$biomass_by_strata |>

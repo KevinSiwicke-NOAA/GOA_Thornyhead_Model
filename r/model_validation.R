@@ -94,7 +94,7 @@ sim_test <- function(mod_name, replicates, cpue) {
 
 # run for thorny and prep data frame -- same process
 # run simulation testing
-par_ests <- sim_test(mod_name = thrn_mod, replicates = 500, cpue = TRUE) # note some warnings
+par_ests <- sim_test(mod_name = thrn_mod, replicates = 1, cpue = TRUE) # note some warnings
 # sometimes spits out: In stats::nlminb(model$par, model$fn, model$gr, control =
 # list(iter.max = 1000,...: NA/NaN function evaluation
 n_not_converged_thrn <- length(which(is.na(par_ests[,1]))); n_thrn <- length(par_ests[,1])
