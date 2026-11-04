@@ -110,6 +110,7 @@ xtra$cpue_by_strata <- xtra$cpue_by_strata |>
 
 cvplots <- plot_extra_cv(xtra)
 cowplot::plot_grid(cvplots$biomass_by_strata +
+                     labs(y = 'Biomass (t)') +
                      facet_wrap(~factor(strata, levels=c('WGOA_0_500','CGOA_0_500','EGOA_0_500',
                                                          'WGOA_501_700','CGOA_501_700','EGOA_501_700',
                                                          'WGOA_701_1000','CGOA_701_1000','EGOA_701_1000')), ncol = 3) +
@@ -122,7 +123,7 @@ cowplot::plot_grid(cvplots$biomass_by_strata +
                    align = "v") 
 
 ggsave(filename = paste0(out_path, '/M24.2a_strata_biomass.png'),
-       dpi = 400, bg = 'white', units = 'in', height = 7, width = 8)
+       dpi = 300, bg = 'white', units = 'in', height = 8, width = 9)
 
 
 # Model 26 (M24.2f) -----
@@ -156,6 +157,7 @@ xtra$cpue_by_strata <- xtra$cpue_by_strata |>
 
 cvplots <- plot_extra_cv(xtra)
 cowplot::plot_grid(cvplots$biomass_by_strata +
+                     labs(y = 'Biomass (t)') +
                      facet_wrap(~factor(strata, levels=c('WGOA_0_700','CGOA_0_700','EGOA_0_700',
                                                          'WGOA_701_1000','CGOA_701_1000','EGOA_701_1000')), ncol = 3),
                    cvplots$cpue_by_strata +
@@ -166,7 +168,7 @@ cowplot::plot_grid(cvplots$biomass_by_strata +
                    align = "h") 
 
 ggsave(filename = paste0(out_path, '/M26_strata_biomass.png'),
-       dpi = 400, bg = 'white', units = 'in', height = 7, width = 8)
+       dpi = 300, bg = 'white', units = 'in', height = 9, width = 9)
 
 # compare with addition of 2025
 compare <- compare_rema_models(rema_models = list(m24.2a, m26))
