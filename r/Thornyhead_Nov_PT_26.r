@@ -298,13 +298,37 @@ biomass_dat_2 |> filter(year %in% c(2023,2025)) |>
   pivot_wider(id_cols = c(strata), names_from = year, values_from = biomass) |>
   mutate(percent_change = (`2025`-`2023`)/`2023`)
 
+tr_ann_chg <- biomass_dat_2 |> filter(year %in% c(2023,2025)) |>
+  mutate(strata = ifelse(grepl('CGOA', strata), 'CGOA',
+                         ifelse(grepl('EGOA', strata), 'EGOA',
+                                'WGOA'))) |> group_by(year) |> summarize(biom = sum(biomass, na.rm = T))
+(tr_ann_chg$biom[2] - tr_ann_chg$biom[1]) / tr_ann_chg$biom[1]
+
+tr_mn_chg <- biomass_dat_2 |> filter( grepl('0_700', strata)) |>
+  mutate(strata = ifelse(grepl('CGOA', strata), 'CGOA',
+                         ifelse(grepl('EGOA', strata), 'EGOA',
+                                'WGOA'))) |> group_by(year) |> summarize(biom = sum(biomass, na.rm = T))
+
+tr_mn_chg[which(tr_mn_chg$year == 2025),'biom'] / mean(tr_mn_chg$biom)
+
 cpue_dat |> filter(year %in% c(2023, 2025)) |>
   pivot_wider(id_cols = c(strata), names_from = year, values_from = cpue) |>
   mutate(percent_change = (`2025`-`2023`)/`2023`)
 
+ll_ann_chg <- cpue_dat |> filter(year %in% c(2023, 2025)) |> group_by(year) |> summarize(biom = sum(cpue))
+(ll_ann_chg$biom[2] - ll_ann_chg$biom[1]) / ll_ann_chg$biom[1]
+
+ll_mn_chg <- cpue_dat |>  group_by(year) |> summarize(biom = sum(cpue, na.rm = T))
+
+ll_mn_chg[which(ll_mn_chg$year == 2025),'biom'] / mean(ll_mn_chg$biom)
+
 old <- 59459
 new <- out26$total_predicted_biomass |> filter(year == 2025) |> pull(pred)
 (new-old)/old
+
+# just to see M24.2a
+new2 <- out24.2a$total_predicted_biomass |> filter(year == 2025) |> pull(pred)
+(new2-old)/old
 
 # Table for predicted biomass by strata with total LCI/UCI
 strata_table <- compare$output$biomass_by_strata |>

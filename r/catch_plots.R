@@ -86,9 +86,22 @@ ggplot(catch_plot) +
   geom_col(aes(Year, Catch, fill = Retention), col = 'black') +
   scale_fill_manual(values = c('lightblue', 'steelblue')) +
   geom_point(aes(Year, ABC), col = 'firebrick') +
+  geom_line(aes(Year, ABC), col = 'firebrick') +
+  scale_y_continuous(expand =c(0,0), limits = c(0, 0.75*0.03*max(vals$pred_uci) + 20)) +
+  facet_wrap(~factor(strata, levels = c("WGOA", "CGOA", "EGOA")))  +
+  ylab("Catch (t)") +
+  theme_bw()
+
+ggsave(filename = paste0(out_path, '/catch_by_area.png'),
+       dpi = 300, bg = 'white', units = 'in', height = 6, width = 11)
+
+ggplot(catch_plot) + 
+  geom_col(aes(Year, Catch, fill = Retention), col = 'black') +
+  scale_fill_manual(values = c('lightblue', 'steelblue')) +
+  geom_point(aes(Year, ABC), col = 'firebrick') +
   geom_line(data = vals, aes(year, 0.75*0.03*pred)) +
   geom_point(data = vals, aes(year, 0.75*0.03*pred)) +
-  geom_ribbon(data = vals, aes(year, ymin = 0.75*0.03*pred_lci, ymax = 0.75*0.03*pred_uci), alpha = 0.5) +
+  # geom_ribbon(data = vals, aes(year, ymin = 0.75*0.03*pred_lci, ymax = 0.75*0.03*pred_uci), alpha = 0.5) +
   geom_line(aes(Year, ABC), col = 'firebrick') +
   scale_y_continuous(expand =c(0,0), limits = c(0, 0.75*0.03*max(vals$pred_uci) + 20)) +
   facet_wrap(~factor(strata, levels = c("WGOA", "CGOA", "EGOA")))  +
@@ -145,7 +158,6 @@ target_catch_disc <- catch |>
   mutate(Year = as.numeric(year)) |> 
   group_by(Year, Target) |> 
   summarize(Catch = sum(weight_posted))
-
 
 ggplot(target_catch) +
   geom_col(aes(Year, Catch, fill = Target)) +
